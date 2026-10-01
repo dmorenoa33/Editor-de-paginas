@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type {
   ElementColor,
   ElementSize,
@@ -619,47 +619,17 @@ function moveElementFromBase(
     return null;
   }
 
-  // El TITLE solo existe en ROW 0.
-  if (sourceUnit.kind === "TITLE") {
-    if (newRow !== 0) {
-      return null;
-    }
-
-    const model: ScreenModel = {
-      ...baseModel,
-      units: {
-        ...baseModel.units,
-        [fromUnitKey]: {
-          ...sourceUnit,
-          elements: sourceUnit.elements.map((e) =>
-            e.id === elementId
-              ? {
-                  ...e,
-                  col: newCol,
-                  row: 0,
-                }
-              : e,
-          ),
-        },
-      },
-    };
-
-    return {
-      model,
-      unitKey: fromUnitKey,
-    };
-  }
-
+  // El TITLE puede moverse horizontalmente en ROW 0 y también
+  // salir de UNIT_00_TITTLE. Al entrar en otra fila elegimos LEFT
+  // o RIGHT según la columna donde se suelte.
   const side =
     sourceUnit.kind === "LEFT"
       ? "L"
       : sourceUnit.kind === "RIGHT"
         ? "R"
-        : null;
-
-  if (!side) {
-    return null;
-  }
+        : newCol < COLS / 2
+          ? "L"
+          : "R";
 
   const targetUnitKey = unitKeyFromRow(
     newRow,
@@ -775,6 +745,40 @@ function modelsEqual(
   return JSON.stringify(a) === JSON.stringify(b);
 }
 
+function normalizeEmptyElements(
+  source: ScreenModel,
+  preserveElementId?: string,
+): ScreenModel {
+  const units: Record<string, ScreenUnit> = {};
+
+  for (const [key, unit] of Object.entries(source.units)) {
+    const nonEmpty = unit.elements.filter(
+      (e) => e.title.trim().length > 0 || e.id === preserveElementId,
+    );
+
+    if (nonEmpty.length > 0) {
+      units[key] = {
+        ...unit,
+        elements: nonEmpty.map((e) => ({
+          ...e,
+          row: unit.row,
+        })),
+      };
+    } else {
+      const kept = unit.elements[0] ?? emptyElement(
+        unit.kind === "TITLE" || unit.mode === "DWN" ? "BIG" : "SMALL",
+        unit.kind === "RIGHT" ? COLS - 1 : 0,
+      );
+      units[key] = {
+        ...unit,
+        elements: [{ ...kept, row: unit.row }],
+      };
+    }
+  }
+
+  return { ...source, units };
+}
+
 export default function App() {
   const initialModel = useMemo(
     () => fromRaw(initialSample),
@@ -800,6 +804,16 @@ export default function App() {
   const [future, setFuture] =
     useState<ScreenModel[]>([]);
 
+  const [inlineEdit, setInlineEdit] = useState<{
+    unitKey: string;
+    elementId: string;
+    value: string;
+  } | null>(null);
+
+  const inlineInputRef = useRef<HTMLInputElement>(null);
+  const inlineFinishingRef = useRef(false);
+  const clipboardRef = useRef<ScreenElement | null>(null);
+
   const fileRef =
     useRef<HTMLInputElement>(null);
 
@@ -816,15 +830,27 @@ export default function App() {
     [model],
   );
 
-  function commit(next: ScreenModel) {
+  function commit(
+    next: ScreenModel,
+    preserveElementId?: string,
+  ) {
+    const cleaned = normalizeEmptyElements(
+      next,
+      preserveElementId,
+    );
+
+    if (modelsEqual(cleaned, model)) {
+      setModel(cleaned);
+      return;
+    }
+
     setHistory((h) => [
       ...h.slice(-39),
       model,
     ]);
 
     setFuture([]);
-
-    setModel(next);
+    setModel(cleaned);
   }
 
   function selectElement(
@@ -833,6 +859,73 @@ export default function App() {
   ) {
     setSelectedUnitKey(unitKey);
     setSelectedElementId(elementId);
+  }
+
+  function beginInlineEdit(
+    unitKey: string,
+    elementId: string,
+  ) {
+    const unit = model.units[unitKey];
+    const element = unit?.elements.find(
+      (e) => e.id === elementId,
+    );
+    if (!element) return;
+
+    selectElement(unitKey, elementId);
+    setInlineEdit({
+      unitKey,
+      elementId,
+      value: element.title,
+    });
+  }
+
+  function finishInlineEdit(cancel = false) {
+    if (!inlineEdit || inlineFinishingRef.current) return;
+    inlineFinishingRef.current = true;
+
+    const unit = model.units[inlineEdit.unitKey];
+    const element = unit?.elements.find(
+      (e) => e.id === inlineEdit.elementId,
+    );
+
+    if (!unit || !element) {
+      setInlineEdit(null);
+      inlineFinishingRef.current = false;
+      return;
+    }
+
+    if (cancel) {
+      const cleaned = normalizeEmptyElements(model);
+      if (!modelsEqual(cleaned, model)) commit(cleaned);
+      setInlineEdit(null);
+      inlineFinishingRef.current = false;
+      return;
+    }
+
+    const next: ScreenModel = {
+      ...model,
+      units: {
+        ...model.units,
+        [inlineEdit.unitKey]: {
+          ...unit,
+          elements: unit.elements.map((e) =>
+            e.id === inlineEdit.elementId
+              ? { ...e, title: inlineEdit.value, row: unit.row }
+              : e,
+          ),
+        },
+      },
+    };
+
+    commit(next, inlineEdit.elementId);
+    setInlineEdit(null);
+    inlineFinishingRef.current = false;
+  }
+
+  function updateInlineValue(value: string) {
+    setInlineEdit((current) =>
+      current ? { ...current, value } : current,
+    );
   }
 
   function updateElement(
@@ -868,6 +961,29 @@ export default function App() {
     commit(next);
   }
 
+  function changeSide(side: "L" | "R") {
+    if (!selectedUnit || !selectedElement || selectedUnit.kind === "TITLE") return;
+    const targetUnitKey = unitKeyFromRow(selectedUnit.row, side);
+    if (!targetUnitKey || targetUnitKey === selectedUnitKey) return;
+    const targetUnit = model.units[targetUnitKey];
+    if (!targetUnit) return;
+    const sourceElements = selectedUnit.elements.filter((e) => e.id !== selectedElement.id);
+    const keptSource = sourceElements.length ? sourceElements : [{ ...emptyElement(selectedElement.size, selectedUnit.kind === "RIGHT" ? COLS - 1 : 0), row: selectedUnit.row }];
+    const targetElements = targetUnit.elements.filter((e) => e.title.trim().length > 0);
+    const moved = { ...selectedElement, row: targetUnit.row };
+    const next: ScreenModel = {
+      ...model,
+      units: {
+        ...model.units,
+        [selectedUnitKey]: { ...selectedUnit, elements: keptSource },
+        [targetUnitKey]: { ...targetUnit, elements: [...targetElements, moved] },
+      },
+    };
+    commit(next, moved.id);
+    setSelectedUnitKey(targetUnitKey);
+    setSelectedElementId(moved.id);
+  }
+
   function addElement() {
     if (!selectedUnit) {
       return;
@@ -898,11 +1014,14 @@ export default function App() {
       },
     };
 
-    commit(next);
+    commit(next, nextElement.id);
 
-    setSelectedElementId(
-      nextElement.id,
-    );
+    setSelectedElementId(nextElement.id);
+    setInlineEdit({
+      unitKey: selectedUnitKey,
+      elementId: nextElement.id,
+      value: "",
+    });
   }
 
   function duplicateElement() {
@@ -994,6 +1113,8 @@ export default function App() {
     unitKey: string,
     element: ScreenElement,
   ) {
+    if (!element.title.trim()) return;
+
     event.preventDefault();
     event.stopPropagation();
 
@@ -1064,7 +1185,12 @@ export default function App() {
         return;
       }
 
-      lastModel = result.model;
+      const cleaned = normalizeEmptyElements(
+        result.model,
+        element.id,
+      );
+
+      lastModel = cleaned;
       lastUnitKey = result.unitKey;
 
       setModel(result.model);
@@ -1195,6 +1321,165 @@ export default function App() {
     }
   }
 
+  function copyElement() {
+    if (!selectedElement?.title.trim()) return;
+
+    clipboardRef.current = {
+      ...selectedElement,
+      id: uid(),
+    };
+  }
+
+  function pasteElement() {
+    const source = clipboardRef.current;
+    if (!source || !selectedUnit) return;
+
+    const copy: ScreenElement = {
+      ...source,
+      id: uid(),
+      col: Math.min(COLS - 1, source.col + 1),
+      row: selectedUnit.row,
+    };
+
+    const next: ScreenModel = {
+      ...model,
+      units: {
+        ...model.units,
+        [selectedUnitKey]: {
+          ...selectedUnit,
+          elements: [
+            ...selectedUnit.elements.filter(
+              (e) => e.title.trim().length > 0,
+            ),
+            copy,
+          ],
+        },
+      },
+    };
+
+    commit(next, copy.id);
+    setSelectedElementId(copy.id);
+  }
+
+  function cutElement() {
+    if (!selectedElement?.title.trim()) return;
+
+    clipboardRef.current = {
+      ...selectedElement,
+      id: uid(),
+    };
+    deleteElement();
+  }
+
+  function handleCanvasDoubleClick(
+    event: React.MouseEvent<HTMLDivElement>,
+  ) {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const col = Math.max(
+      0,
+      Math.min(
+        COLS - 1,
+        Math.floor((event.clientX - rect.left) / CELL_W),
+      ),
+    );
+    const row = Math.max(
+      0,
+      Math.min(
+        ROWS - 1,
+        Math.floor((event.clientY - rect.top) / CELL_H),
+      ),
+    );
+
+    const occupied = orderedUnits
+      .filter((u) => u.row === row)
+      .flatMap((u) =>
+        u.elements
+          .filter((e) => e.title.trim().length > 0)
+          .map((e) => ({ unit: u, element: e })),
+      )
+      .find(({ unit, element }) => {
+        const start =
+          unit.kind === "RIGHT"
+            ? element.col - element.title.length + 1
+            : element.col;
+        const end = start + element.title.length - 1;
+        return col >= start && col <= end;
+      });
+
+    if (occupied) {
+      beginInlineEdit(occupied.unit.key, occupied.element.id);
+      return;
+    }
+
+    let targetUnitKey: string;
+
+    if (row === 0) {
+      targetUnitKey = "UNIT_00_TITTLE";
+    } else if (
+      selectedUnit?.kind === "LEFT" ||
+      selectedUnit?.kind === "RIGHT"
+    ) {
+      targetUnitKey =
+        unitKeyFromRow(
+          row,
+          selectedUnit.kind === "LEFT" ? "L" : "R",
+        ) ?? "";
+    } else {
+      targetUnitKey =
+        unitKeyFromRow(
+          row,
+          col < COLS / 2 ? "L" : "R",
+        ) ?? "";
+    }
+
+    const targetUnit = model.units[targetUnitKey];
+    if (!targetUnit) return;
+
+    const empty = targetUnit.elements.find(
+      (e) => !e.title.trim(),
+    );
+
+    const element = empty
+      ? {
+          ...empty,
+          col,
+          row: targetUnit.row,
+        }
+      : {
+          ...emptyElement(
+            targetUnit.kind === "TITLE" || targetUnit.mode === "DWN"
+              ? "BIG"
+              : "SMALL",
+            col,
+          ),
+          row: targetUnit.row,
+        };
+
+    const next: ScreenModel = {
+      ...model,
+      units: {
+        ...model.units,
+        [targetUnitKey]: {
+          ...targetUnit,
+          elements: empty
+            ? targetUnit.elements.map((e) =>
+                e.id === empty.id ? element : e,
+              )
+            : [...targetUnit.elements, element],
+        },
+      },
+    };
+
+    commit(next, element.id);
+    setSelectedUnitKey(targetUnitKey);
+    setSelectedElementId(element.id);
+    setInlineEdit({
+      unitKey: targetUnitKey,
+      elementId: element.id,
+      value: "",
+    });
+  }
+
   function exportJson() {
     const blob = new Blob(
       [
@@ -1237,7 +1522,7 @@ export default function App() {
           ) as RawJson;
 
         const next =
-          fromRaw(parsed);
+          normalizeEmptyElements(fromRaw(parsed));
 
         commit(next);
 
@@ -1285,6 +1570,82 @@ export default function App() {
         .elements[0].id,
     );
   }
+
+  useEffect(() => {
+    if (inlineEdit) {
+      requestAnimationFrame(() =>
+        inlineInputRef.current?.focus(),
+      );
+    }
+  }, [inlineEdit?.elementId]);
+
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      const target = event.target as HTMLElement | null;
+      const editingField =
+        target?.tagName === "INPUT" ||
+        target?.tagName === "SELECT" ||
+        target?.tagName === "TEXTAREA" ||
+        target?.isContentEditable;
+
+      if (editingField) {
+        if (event.key === "Escape" && inlineEdit) {
+          event.preventDefault();
+          finishInlineEdit(true);
+        }
+        if (event.key === "Enter" && inlineEdit) {
+          event.preventDefault();
+          finishInlineEdit(false);
+        }
+        return;
+      }
+
+      const mod = event.ctrlKey || event.metaKey;
+      if (!mod) return;
+
+      if (event.key.toLowerCase() === "z") {
+        event.preventDefault();
+        event.shiftKey ? redo() : undo();
+        return;
+      }
+
+      if (event.key.toLowerCase() === "y") {
+        event.preventDefault();
+        redo();
+        return;
+      }
+
+      if (event.key.toLowerCase() === "c") {
+        event.preventDefault();
+        copyElement();
+        return;
+      }
+
+      if (event.key.toLowerCase() === "x") {
+        event.preventDefault();
+        cutElement();
+        return;
+      }
+
+      if (event.key.toLowerCase() === "v") {
+        event.preventDefault();
+        pasteElement();
+      }
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+    return () =>
+      window.removeEventListener("keydown", onKeyDown);
+  }, [
+    model,
+    selectedUnitKey,
+    selectedElementId,
+    selectedUnit,
+    selectedElement,
+    history,
+    future,
+    inlineEdit,
+  ]);
 
   const canvasW =
     COLS * CELL_W;
@@ -1460,6 +1821,20 @@ export default function App() {
 
         <section className="canvas-area">
           <div className="screen-frame">
+            <div className="row-side-buttons left-side-buttons" aria-hidden="true">
+              {[2, 4, 6, 8, 10, 12].map((row) => (
+                <button key={`left-row-${row}`} type="button" className="row-side-button" style={{ top: row * CELL_H + (CELL_H - 24) / 2 }} tabIndex={-1}>
+                  {"L" + row / 2}
+                </button>
+              ))}
+            </div>
+            <div className="row-side-buttons right-side-buttons" aria-hidden="true">
+              {[2, 4, 6, 8, 10, 12].map((row) => (
+                <button key={`right-row-${row}`} type="button" className="row-side-button" style={{ top: row * CELL_H + (CELL_H - 24) / 2 }} tabIndex={-1}>
+                  {"R" + row / 2}
+                </button>
+              ))}
+            </div>
             <div
               className="screen-canvas"
               style={{
@@ -1476,6 +1851,7 @@ export default function App() {
                   );
                 }
               }}
+              onDoubleClick={handleCanvasDoubleClick}
             >
               {/* ROWS */}
               {Array.from({
@@ -1510,91 +1886,101 @@ export default function App() {
               ))}
 
               {/* ELEMENTS */}
-              {orderedUnits.flatMap(
-                (unit) =>
-                  unit.elements.map(
-                    (element) => {
-                      const selected =
-                        element.id ===
-                          selectedElementId &&
-                        unit.key ===
-                          selectedUnitKey;
+              {orderedUnits.flatMap((unit) =>
+                unit.elements
+                  .filter(
+                    (element) =>
+                      element.title.trim().length > 0 ||
+                      (inlineEdit?.unitKey === unit.key &&
+                        inlineEdit.elementId === element.id),
+                  )
+                  .map((element) => {
+                    const selected =
+                      element.id === selectedElementId &&
+                      unit.key === selectedUnitKey;
+                    const editing =
+                      inlineEdit?.unitKey === unit.key &&
+                      inlineEdit.elementId === element.id;
+                    const title =
+                      editing ? inlineEdit.value : element.title;
+                    const length = Math.max(1, title.length);
+                    const leftCol =
+                      unit.kind === "RIGHT"
+                        ? element.col - length + 1
+                        : element.col;
+                    const classes = [
+                      "canvas-element",
+                      colorClass(element.color),
+                      element.size === "BIG" ? "big" : "small",
+                      selected ? "selected" : "",
+                      element.underlined ? "underlined" : "",
+                      element.reverseVideo ? "reverse" : "",
+                      element.flashing ? "flashing" : "",
+                    ].join(" ");
 
-                      const isEmpty =
-                        element.title
-                          .length === 0;
-
+                    if (editing) {
                       return (
-                        <button
-                          key={
-                            element.id
+                        <input
+                          key={element.id}
+                          ref={inlineInputRef}
+                          className={`${classes} canvas-inline-input`}
+                          value={title}
+                          onChange={(e) =>
+                            updateInlineValue(e.target.value)
                           }
-                          className={[
-                            "canvas-element",
-                            colorClass(
-                              element.color,
-                            ),
-                            element.size ===
-                            "BIG"
-                              ? "big"
-                              : "small",
-                            selected
-                              ? "selected"
-                              : "",
-                            element.underlined
-                              ? "underlined"
-                              : "",
-                            element.reverseVideo
-                              ? "reverse"
-                              : "",
-                            element.flashing
-                              ? "flashing"
-                              : "",
-                            isEmpty
-                              ? "empty"
-                              : "",
-                          ].join(" ")}
+                          onBlur={() => finishInlineEdit(false)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              finishInlineEdit(false);
+                            } else if (e.key === "Escape") {
+                              e.preventDefault();
+                              finishInlineEdit(true);
+                            }
+                          }}
                           style={{
-                            left:
-                              (unit.kind === "RIGHT"
-                                ? element.col - Math.max(1, element.title.length) + 1
-                                : element.col) * CELL_W + 1,
+                            left: leftCol * CELL_W + 1,
                             top: unit.row * CELL_H + 2,
-                            width: Math.max(1, element.title.length) * CELL_W,
+                            width: length * CELL_W,
                             height: CELL_H,
                           }}
-                          onPointerDown={(
-                            e,
-                          ) => {
-                            selectElement(
-                              unit.key,
-                              element.id,
-                            );
-
-                            handleDragStart(
-                              e,
-                              unit.key,
-                              element,
-                            );
-                          }}
-                          title={`${unit.key} · COL ${element.col} · ROW ${unit.row}`}
-                        >
-                          {(element.title || " ").split("").map((char, index) => {
-                            const charOffset = index;
-                            return (
-                              <span
-                                key={`${element.id}-${index}`}
-                                className="canvas-char"
-                                style={{ left: charOffset * CELL_W }}
-                              >
-                                {char}
-                              </span>
-                            );
-                          })}
-                        </button>
+                        />
                       );
-                    },
-                  ),
+                    }
+
+                    return (
+                      <button
+                        key={element.id}
+                        className={classes}
+                        style={{
+                          left: leftCol * CELL_W + 1,
+                          top: unit.row * CELL_H + 2,
+                          width: length * CELL_W,
+                          height: CELL_H,
+                        }}
+                        onPointerDown={(e) => {
+                          selectElement(unit.key, element.id);
+                          handleDragStart(e, unit.key, element);
+                        }}
+                        onDoubleClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          beginInlineEdit(unit.key, element.id);
+                        }}
+                        title={`${unit.key} · COL ${element.col} · ROW ${unit.row}`}
+                      >
+                        {title.split("").map((char, index) => (
+                          <span
+                            key={`${element.id}-${index}`}
+                            className="canvas-char"
+                            style={{ left: index * CELL_W }}
+                          >
+                            {char}
+                          </span>
+                        ))}
+                      </button>
+                    );
+                  }),
               )}
             </div>
           </div>
@@ -1753,6 +2139,19 @@ export default function App() {
                       </option>
                     </select>
                   </label>
+
+                  {selectedUnit.kind !== "TITLE" && (
+                    <label>
+                      <span>SIDE</span>
+                      <select
+                        value={selectedUnit.kind === "LEFT" ? "L" : "R"}
+                        onChange={(e) => changeSide(e.target.value as "L" | "R")}
+                      >
+                        <option value="L">LEFT</option>
+                        <option value="R">RIGHT</option>
+                      </select>
+                    </label>
+                  )}
 
                   <div className="coords">
                     <label>
@@ -1922,8 +2321,12 @@ function UnitTree({
       </button>
 
       <div className="elements">
-        {unit.elements.map(
-          (element, i) => (
+        {unit.elements
+          .filter(
+            (element) => element.title.trim().length > 0,
+          )
+          .map(
+            (element, i) => (
             <button
               key={
                 element.id
