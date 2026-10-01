@@ -1,0 +1,322 @@
+{
+  "UNIT_00_TITTLE": {
+    "ELEMENT_1": {
+      "TITTLE": "DL",
+      "COLOR": "WHITE",
+      "SIZE": "BIG",
+      "UNDERLINED": false,
+      "FLASHING": false,
+      "REVERSE_VIDEO": false,
+      "COL": 2,
+      "ROW": 0
+    },
+    "ELEMENT_2": {
+      "TITTLE": "ATIS REQ",
+      "COLOR": "WHITE",
+      "SIZE": "BIG",
+      "UNDERLINED": false,
+      "FLASHING": false,
+      "REVERSE_VIDEO": false,
+      "COL": 9,
+      "ROW": 0
+    }
+  },
+  "UNIT_L1_0_UP": {
+    "ELEMENT_1": {
+      "TITTLE": "AIRPORT",
+      "COLOR": "WHITE",
+      "SIZE": "SMALL",
+      "UNDERLINED": false,
+      "FLASHING": false,
+      "REVERSE_VIDEO": false,
+      "COL": 2,
+      "ROW": 1
+    }
+  },
+  "UNIT_L1_1_DWN": {
+    "ELEMENT_1": {
+      "TITTLE": "KORD",
+      "COLOR": "WHITE",
+      "SIZE": "BIG",
+      "UNDERLINED": false,
+      "FLASHING": false,
+      "REVERSE_VIDEO": false,
+      "COL": 2,
+      "ROW": 2
+    }
+  },
+  "UNIT_L2_0_UP": {
+    "ELEMENT_1": {
+      "TITTLE": "SERVICE TYPE",
+      "COLOR": "WHITE",
+      "SIZE": "SMALL",
+      "UNDERLINED": false,
+      "FLASHING": false,
+      "REVERSE_VIDEO": false,
+      "COL": 3,
+      "ROW": 3
+    }
+  },
+  "UNIT_L2_1_DWN": {
+    "ELEMENT_1": {
+      "TITTLE": "↓ARRIVAL ATIS",
+      "COLOR": "WHITE",
+      "SIZE": "BIG",
+      "UNDERLINED": false,
+      "FLASHING": false,
+      "REVERSE_VIDEO": false,
+      "COL": 2,
+      "ROW": 4
+    }
+  },
+  "UNIT_L3_0_UP": {
+    "ELEMENT_1": {
+      "TITTLE": "REPORTING MODE",
+      "COLOR": "WHITE",
+      "SIZE": "SMALL",
+      "UNDERLINED": false,
+      "FLASHING": false,
+      "REVERSE_VIDEO": false,
+      "COL": 3,
+      "ROW": 5
+    }
+  },
+  "UNIT_L3_1_DWN": {
+    "ELEMENT_1": {
+      "TITTLE": "↓START AUTO-UPDATES",
+      "COLOR": "WHITE",
+      "SIZE": "BIG",
+      "UNDERLINED": false,
+      "FLASHING": false,
+      "REVERSE_VIDEO": false,
+      "COL": 2,
+      "ROW": 6
+    }
+  },
+  "UNIT_L4_0_UP": {
+    "ELEMENT_1": {
+      "TITTLE": "",
+      "COLOR": "WHITE",
+      "SIZE": "SMALL",
+      "UNDERLINED": false,
+      "FLASHING": false,
+      "REVERSE_VIDEO": false,
+      "COL": 0,
+      "ROW": 7
+    }
+  },
+  "UNIT_L4_1_DWN": {
+    "ELEMENT_1": {
+      "TITTLE": "",
+      "COLOR": "WHITE",
+      "SIZE": "BIG",
+      "UNDERLINED": false,
+      "FLASHING": false,
+      "REVERSE_VIDEO": false,
+      "COL": 0,
+      "ROW": 8
+    }
+  },
+  "UNIT_L5_0_UP": {
+    "ELEMENT_1": {
+      "TITTLE": "",
+      "COLOR": "WHITE",
+      "SIZE": "SMALL",
+      "UNDERLINED": false,
+      "FLASHING": false,
+      "REVERSE_VIDEO": false,
+      "COL": 0,
+      "ROW": 9
+    }
+  },
+  "UNIT_L5_1_DWN": {
+    "ELEMENT_1": {
+      "TITTLE": "",
+      "COLOR": "WHITE",
+      "SIZE": "BIG",
+      "UNDERLINED": false,
+      "FLASHING": false,
+      "REVERSE_VIDEO": false,
+      "COL": 0,
+      "ROW": 10
+    }
+  },
+  "UNIT_L6_0_UP": {
+    "ELEMENT_1": {
+      "TITTLE": "",
+      "COLOR": "WHITE",
+      "SIZE": "BIG",
+      "UNDERLINED": false,
+      "FLASHING": false,
+      "REVERSE_VIDEO": false,
+      "COL": 0,
+      "ROW": 11
+    }
+  },
+  "UNIT_L6_1_DWN": {
+    "ELEMENT_1": {
+      "TITTLE": "<RETURN",
+      "COLOR": "WHITE",
+      "SIZE": "BIG",
+      "UNDERLINED": false,
+      "FLASHING": false,
+      "REVERSE_VIDEO": false,
+      "COL": 0,
+      "ROW": 11
+    },
+    "ELEMENT_2": {
+      "TITTLE": "HH:MM",
+      "COLOR": "WHITE",
+      "SIZE": "SMALL",
+      "UNDERLINED": false,
+      "FLASHING": false,
+      "REVERSE_VIDEO": false,
+      "COL": 10,
+      "ROW": 11
+    }
+  },
+  "UNIT_R1_0_UP": {
+    "ELEMENT_1": {
+      "TITTLE": "",
+      "COLOR": "WHITE",
+      "SIZE": "SMALL",
+      "UNDERLINED": false,
+      "FLASHING": false,
+      "REVERSE_VIDEO": false,
+      "COL": 16,
+      "ROW": 1
+    }
+  },
+  "UNIT_R1_1_DWN": {
+    "ELEMENT_1": {
+      "TITTLE": "",
+      "COLOR": "WHITE",
+      "SIZE": "BIG",
+      "UNDERLINED": false,
+      "FLASHING": false,
+      "REVERSE_VIDEO": false,
+      "COL": 16,
+      "ROW": 2
+    }
+  },
+  "UNIT_R2_0_UP": {
+    "ELEMENT_1": {
+      "TITTLE": "",
+      "COLOR": "WHITE",
+      "SIZE": "SMALL",
+      "UNDERLINED": false,
+      "FLASHING": false,
+      "REVERSE_VIDEO": false,
+      "COL": 13,
+      "ROW": 3
+    }
+  },
+  "UNIT_R2_1_DWN": {
+    "ELEMENT_1": {
+      "TITTLE": "",
+      "COLOR": "WHITE",
+      "SIZE": "BIG",
+      "UNDERLINED": false,
+      "FLASHING": false,
+      "REVERSE_VIDEO": false,
+      "COL": 13,
+      "ROW": 4
+    }
+  },
+  "UNIT_R3_0_UP": {
+    "ELEMENT_1": {
+      "TITTLE": "",
+      "COLOR": "WHITE",
+      "SIZE": "SMALL",
+      "UNDERLINED": false,
+      "FLASHING": false,
+      "REVERSE_VIDEO": false,
+      "COL": 12,
+      "ROW": 5
+    }
+  },
+  "UNIT_R3_1_DWN": {
+    "ELEMENT_1": {
+      "TITTLE": "",
+      "COLOR": "WHITE",
+      "SIZE": "BIG",
+      "UNDERLINED": false,
+      "FLASHING": false,
+      "REVERSE_VIDEO": false,
+      "COL": 12,
+      "ROW": 6
+    }
+  },
+  "UNIT_R4_0_UP": {
+    "ELEMENT_1": {
+      "TITTLE": "",
+      "COLOR": "WHITE",
+      "SIZE": "SMALL",
+      "UNDERLINED": false,
+      "FLASHING": false,
+      "REVERSE_VIDEO": false,
+      "COL": 12,
+      "ROW": 7
+    }
+  },
+  "UNIT_R4_1_DWN": {
+    "ELEMENT_1": {
+      "TITTLE": "",
+      "COLOR": "WHITE",
+      "SIZE": "BIG",
+      "UNDERLINED": false,
+      "FLASHING": false,
+      "REVERSE_VIDEO": false,
+      "COL": 12,
+      "ROW": 8
+    }
+  },
+  "UNIT_R5_0_UP": {
+    "ELEMENT_1": {
+      "TITTLE": "REQ",
+      "COLOR": "WHITE",
+      "SIZE": "SMALL",
+      "UNDERLINED": false,
+      "FLASHING": false,
+      "REVERSE_VIDEO": false,
+      "COL": 20,
+      "ROW": 9
+    }
+  },
+  "UNIT_R5_1_DWN": {
+    "ELEMENT_1": {
+      "TITTLE": "SEND*",
+      "COLOR": "WHITE",
+      "SIZE": "BIG",
+      "UNDERLINED": false,
+      "FLASHING": false,
+      "REVERSE_VIDEO": false,
+      "COL": 21,
+      "ROW": 10
+    }
+  },
+  "UNIT_R6_0_UP": {
+    "ELEMENT_1": {
+      "TITTLE": "",
+      "COLOR": "WHITE",
+      "SIZE": "SMALL",
+      "UNDERLINED": false,
+      "FLASHING": false,
+      "REVERSE_VIDEO": false,
+      "COL": 21,
+      "ROW": 11
+    }
+  },
+  "UNIT_R6_1_DWN": {
+    "ELEMENT_1": {
+      "TITTLE": "",
+      "COLOR": "WHITE",
+      "SIZE": "BIG",
+      "UNDERLINED": false,
+      "FLASHING": false,
+      "REVERSE_VIDEO": false,
+      "COL": 23,
+      "ROW": 12
+    }
+  }
+}
