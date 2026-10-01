@@ -8,7 +8,7 @@ import type {
 } from "./types";
 
 const COLS = 28;
-const ROWS = 13;
+const ROWS = 15;
 
 // Un carácter ocupa aproximadamente 1 unidad de ancho
 // y 2 unidades de alto.
