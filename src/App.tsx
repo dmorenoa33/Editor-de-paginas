@@ -7,7 +7,7 @@ import type {
   ScreenUnit,
 } from "./types";
 
-const COLS = 24;
+const COLS = 28;
 const ROWS = 13;
 
 // Un carácter ocupa aproximadamente 1 unidad de ancho
