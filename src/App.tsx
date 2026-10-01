@@ -214,6 +214,32 @@ const initialSample = {
     },
   },
 
+  UNIT_L7_0_UP: {
+    ELEMENT_1: {
+      TITTLE: "",
+      COLOR: "WHITE",
+      SIZE: "BIG",
+      UNDERLINED: false,
+      FLASHING: false,
+      REVERSE_VIDEO: false,
+      COL: 0,
+      ROW: 11,
+    },
+  },
+
+  UNIT_L7_1_DWN: {
+    ELEMENT_1: {
+      TITTLE: "",
+      COLOR: "WHITE",
+      SIZE: "BIG",
+      UNDERLINED: false,
+      FLASHING: false,
+      REVERSE_VIDEO: false,
+      COL: 0,
+      ROW: 11,
+    },
+  },
+
   UNIT_R1_0_UP: {
     ELEMENT_1: {
       TITTLE: "",
@@ -369,6 +395,31 @@ const initialSample = {
       ROW: 12,
     },
   },
+  UNIT_R7_0_UP: {
+    ELEMENT_1: {
+      TITTLE: "",
+      COLOR: "WHITE",
+      SIZE: "SMALL",
+      UNDERLINED: false,
+      FLASHING: false,
+      REVERSE_VIDEO: false,
+      COL: 21,
+      ROW: 11,
+    },
+  },
+
+  UNIT_R7_1_DWN: {
+    ELEMENT_1: {
+      TITTLE: "",
+      COLOR: "WHITE",
+      SIZE: "BIG",
+      UNDERLINED: false,
+      FLASHING: false,
+      REVERSE_VIDEO: false,
+      COL: 23,
+      ROW: 12,
+    },
+  },
 } as const;
 
 type RawElement = {
@@ -463,7 +514,7 @@ function unitKeyFromRow(
     return "UNIT_00_TITTLE";
   }
 
-  if (row < 1 || row > 12) {
+  if (row < 1 || row > COLS - 1) {
     return null;
   }
 
