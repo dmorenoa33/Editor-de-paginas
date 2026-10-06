@@ -7,8 +7,8 @@ import type {
   ScreenUnit,
 } from "./types";
 
-const COLS = 28;
-const ROWS = 15;
+const COLS = 24;
+const ROWS = 14;
 
 // Un carácter ocupa aproximadamente 1 unidad de ancho
 // y 2 unidades de alto.
